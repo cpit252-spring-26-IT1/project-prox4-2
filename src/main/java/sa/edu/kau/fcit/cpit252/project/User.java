@@ -13,6 +13,9 @@ public class User {
     public Role getRole() { return role; }
 
     public boolean canRead(FileResource file) {
+        if (file == null || file.getType() == null) {
+            return false;
+        }
         switch (file.getType()) {
             case SENSITIVE:
                 return this.role == Role.MANAGER; 
@@ -21,7 +24,7 @@ public class User {
             case NORMAL:
                 return true; 
             default:
-                return false;
+                return false; //deny access Unknown file type
         }
     }
 }
