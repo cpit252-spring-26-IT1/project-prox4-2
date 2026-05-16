@@ -4,8 +4,8 @@ import java.time.LocalTime;
 
 public class TimeAccessChecker {
 
-    private static final int BUSINESS_HOURS_START = 7;  
-    private static final int BUSINESS_HOURS_END = 23;   
+    private static final int BUSINESS_HOURS_START = 0;
+    private static final int BUSINESS_HOURS_END = 24;
 
     public boolean isAccessAllowed() {
         int currentHour = LocalTime.now().getHour();
