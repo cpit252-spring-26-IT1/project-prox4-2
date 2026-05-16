@@ -28,7 +28,6 @@ public class SecureFileProxy implements FileAccess {
             observer.onAccessEvent(event, user, file);
         }
     }
-
     @Override
     public void openFile(FileResource file, User user) {
         if (file == null || user == null) {
@@ -37,6 +36,14 @@ public class SecureFileProxy implements FileAccess {
         }
 
         System.out.println("++ [PROXY] Checking security protocols for: " + file.getName());
+
+        // Time-based access check
+        TimeAccessChecker timeChecker = new TimeAccessChecker();
+        if (!timeChecker.isAccessAllowed()) {
+            System.out.println("XX [PROXY DENIED] Access outside business hours: " + timeChecker.getAccessWindow());
+            notifyObservers(AccessEvent.ACCESS_DENIED, user, file);
+            return;
+        }
 
         if (!user.canRead(file)) {
             System.out.println("XX [PROXY DENIED] Security Alert: Role [" + user.getRole() + "] is unauthorized to view " + file.getType() + " files.");
