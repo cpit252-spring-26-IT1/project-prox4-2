@@ -3,15 +3,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SecureFileProxy implements FileAccess {
-    private RealFileAccess realService;
-    private Map<String, Integer> tracker = new HashMap<>();
+    private final RealFileAccess realService;
+    private final Map<String, Integer> tracker;
 
-    public SecureFileProxy() { this.realService = new RealFileAccess(); }
+        public SecureFileProxy() {
+        this.realService = new RealFileAccess();
+        this.tracker = new HashMap<>();
+    }
 
     @Override
     public void openFile(FileResource file, User user) {
+        if (file == null || user == null) {
+            System.out.println(">> [PROXY ERROR] Invalid file or user reference.");
+            return;
+        }
+
         System.out.println("++ [PROXY] Checking security protocols for: " + file.getName());
-        
+
         if (!user.canRead(file)) {
             System.out.println("XX [PROXY DENIED] Security Alert: Role [" + user.getRole() + "] is unauthorized to view " + file.getType() + " files.");
             return;
