@@ -37,11 +37,11 @@ public class RealFileAccess implements FileAccess {
 
             // Watermark header
             String timestamp = LocalDateTime.now().format(FORMATTER);
-            System.out.println("╔══════════════════════════════════════════════╗");
+            System.out.println("================================================");
             System.out.println("  CONFIDENTIAL - Viewed by: " + user.getUsername() + " (" + user.getRole() + ")");
             System.out.println("  Date: " + timestamp);
             System.out.println("  File: " + file.getName() + " [" + file.getType() + "]");
-            System.out.println("╠══════════════════════════════════════════════╣");
+            System.out.println("------------------------------------------------");
 
             List<String> lines = Files.readAllLines(f.toPath());
             if (lines.isEmpty()) {
@@ -53,9 +53,9 @@ public class RealFileAccess implements FileAccess {
             }
 
             // Watermark footer
-            System.out.println("╠══════════════════════════════════════════════╣");
+            System.out.println("------------------------------------------------");
             System.out.println("  END OF DOCUMENT - ProX4 Secure File System");
-            System.out.println("╚══════════════════════════════════════════════╝");
+            System.out.println("================================================");
 
         } catch (IOException e) {
             System.out.println(">> [SYSTEM ERROR] IO problem while reading file: " + e.getMessage());
