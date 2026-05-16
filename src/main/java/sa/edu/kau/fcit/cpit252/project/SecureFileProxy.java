@@ -1,14 +1,32 @@
 package sa.edu.kau.fcit.cpit252.project;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SecureFileProxy implements FileAccess {
     private final RealFileAccess realService;
     private final Map<String, Integer> tracker;
+    private final List<AccessObserver> observers;
 
-        public SecureFileProxy() {
+    public SecureFileProxy() {
         this.realService = new RealFileAccess();
         this.tracker = new HashMap<>();
+        this.observers = new ArrayList<>();
+    }
+
+    public void addObserver(AccessObserver observer) {
+        observers.add(observer);
+    }
+
+    public void removeObserver(AccessObserver observer) {
+        observers.remove(observer);
+    }
+
+    private void notifyObservers(AccessEvent event, User user, FileResource file) {
+        for (AccessObserver observer : observers) {
+            observer.onAccessEvent(event, user, file);
+        }
     }
 
     @Override
