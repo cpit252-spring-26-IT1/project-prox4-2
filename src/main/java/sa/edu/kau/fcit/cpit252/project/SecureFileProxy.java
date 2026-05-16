@@ -40,6 +40,7 @@ public class SecureFileProxy implements FileAccess {
 
         if (!user.canRead(file)) {
             System.out.println("XX [PROXY DENIED] Security Alert: Role [" + user.getRole() + "] is unauthorized to view " + file.getType() + " files.");
+            notifyObservers(AccessEvent.ACCESS_DENIED, user, file);
             return;
         }
 
@@ -48,9 +49,11 @@ public class SecureFileProxy implements FileAccess {
 
         if (views >= 3) {
             System.out.println("XX [PROXY BLOCKED] Limit Reached: You have already viewed this file 3 times.");
+            notifyObservers(AccessEvent.LIMIT_REACHED, user, file);
         } else {
             tracker.put(key, views + 1);
             System.out.println("++ [PROXY GRANTED] Permission verified. (View Count: " + (views + 1) + "/3)");
+            notifyObservers(AccessEvent.ACCESS_GRANTED, user, file);
             realService.openFile(file, user);
         }
     }
