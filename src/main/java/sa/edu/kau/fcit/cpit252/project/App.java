@@ -86,16 +86,18 @@ public class App {
                         } catch (NumberFormatException e) {
                             System.out.println(">> [INVALID] Please enter a number (1, 2, or 3).");
                             break;
-                        }if (t < 1 || t > 3) {
-                        System.out.println(">> [INVALID] Level must be 1, 2, or 3.");
-                        break;
-                    }
+                        }
 
-                    FileType ft = (t == 1) ? FileType.SENSITIVE : (t == 2) ? FileType.INTERNAL : FileType.NORMAL;
-                    FileResource res = new FileResource(fn, fp, ft);
-                    System.out.println(">> [STATUS] File metadata created. Passing to Proxy...");
-                    proxy.openFile(res, user);
-                    break;
+                        if (t < 1 || t > 3) {
+                            System.out.println(">> [INVALID] Level must be 1, 2, or 3.");
+                            break;
+                        }
+
+                        FileType ft = (t == 1) ? FileType.SENSITIVE : (t == 2) ? FileType.INTERNAL : FileType.NORMAL;
+                        FileResource res = new FileResource(fn, fp, ft);
+                        System.out.println(">> [STATUS] File metadata created. Passing to Proxy...");
+                        proxy.openFile(res, user);
+                        break;
 
                     case "2":
                         System.out.println("\n>> [ACTION] Preparing file for download...");
@@ -130,14 +132,14 @@ public class App {
                         }
 
                         if (dt < 1 || dt > 3) {
-                        System.out.println(">> [INVALID] Level must be 1, 2, or 3.");
-                        break;
-                    }
+                            System.out.println(">> [INVALID] Level must be 1, 2, or 3.");
+                            break;
+                        }
 
-                    FileType dft = (dt == 1) ? FileType.SENSITIVE : (dt == 2) ? FileType.INTERNAL : FileType.NORMAL;
-                    FileResource dres = new FileResource(dfn, dfp, dft);
-                    downloadProxy.downloadFile(dres, user);
-                    break;
+                        FileType dft = (dt == 1) ? FileType.SENSITIVE : (dt == 2) ? FileType.INTERNAL : FileType.NORMAL;
+                        FileResource dres = new FileResource(dfn, dfp, dft);
+                        downloadProxy.downloadFile(dres, user);
+                        break;
 
                     case "3":
                         System.out.println(">> [LOGOUT] Session for " + user.getUsername() + " has ended.");
