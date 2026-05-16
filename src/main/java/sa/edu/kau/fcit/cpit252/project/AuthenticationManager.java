@@ -4,7 +4,7 @@ import java.util.Map;
 
 public class AuthenticationManager {
     private static AuthenticationManager instance;
-    private Map<String, Role> userDatabase;
+    private final Map<String, Role> userDatabase;
 
     private AuthenticationManager() {
         userDatabase = new HashMap<>();
@@ -15,20 +15,32 @@ public class AuthenticationManager {
         System.out.println(">> [SYSTEM] Authentication Manager has been successfully initialized.");
     }
 
-    public static AuthenticationManager getInstance() {
-        if (instance == null) instance = new AuthenticationManager();
+    public static synchronized AuthenticationManager getInstance() {
+        if (instance == null) {
+            instance = new AuthenticationManager();
+        }
         return instance;
     }
 
     public User authenticate(String username) {
-        if (userDatabase.containsKey(username)) {
-            Role role = userDatabase.get(username);
-            System.out.println(">> [LOGIN SUCCESS] Welcome back, " + username + "! Your role is: " + role);
-            return new User(username, role);
+        if (username == null || username.trim().isEmpty()) {
+            System.out.println(">> [LOGIN FAILED] Username cannot be empty.");
+            return null;
+        }
+        
+        String trimmedUsername = username.trim();
+        
+        // Case-insensitive lookup
+        for (Map.Entry<String, Role> entry : userDatabase.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(trimmedUsername)) {
+                Role role = entry.getValue();
+                System.out.println(">> [LOGIN SUCCESS] Welcome back, " + entry.getKey() + "! Your role is: " + role);
+                return new User(entry.getKey(), role);
+            }
         }
        
-        System.out.println(">> [VISITOR ACCESS] User '" + username + "' not found in our records.");
+        System.out.println(">> [VISITOR ACCESS] User '" + trimmedUsername + "' not found in our records.");
         System.out.println(">> [SYSTEM] You are now logged in as a GUEST with limited access.");
-        return new User(username, Role.GUEST);
+        return new User(trimmedUsername, Role.GUEST);
     }
 }
