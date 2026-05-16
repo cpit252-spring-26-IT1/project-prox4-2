@@ -1,9 +1,9 @@
 package sa.edu.kau.fcit.cpit252.project;
 
 public class FileResource {
-    private String name;
-    private String path; 
-    private FileType type;
+    private final String name;
+    private final String path; 
+    private final FileType type;
 
     public FileResource(String name, String path, FileType type) {
         this.name = name;
