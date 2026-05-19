@@ -1,5 +1,6 @@
-package sa.edu.kau.fcit.cpit252.project;
+package sa.edu.kau.fcit.cpit252.project.model;
 
+import sa.edu.kau.fcit.cpit252.project.files.FileType;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
