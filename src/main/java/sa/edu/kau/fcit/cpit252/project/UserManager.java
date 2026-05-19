@@ -87,4 +87,40 @@ public class UserManager {
         }
         System.out.println();
     }
+
+    public void promoteUser(UserAccount requester) {
+        if (requester.getRole() != Role.OWNER) {
+            System.out.println(Colors.red("XX [DENIED] Only OWNER can promote users."));
+            return;
+        }
+
+        System.out.println(Colors.cyan("\n─── Promote User ───"));
+        listUsers();
+
+        System.out.print("Enter username to promote: ");
+        String username = sc.nextLine().trim();
+        if (username.isEmpty()) {
+            System.out.println(Colors.red(">> [INVALID] Username cannot be empty."));
+            return;
+        }
+        auth.promoteUser(username, requester);
+    }
+
+    public void demoteUser(UserAccount requester) {
+        if (requester.getRole() != Role.OWNER) {
+            System.out.println(Colors.red("XX [DENIED] Only OWNER can demote users."));
+            return;
+        }
+
+        System.out.println(Colors.cyan("\n─── Demote User ───"));
+        listUsers();
+
+        System.out.print("Enter username to demote: ");
+        String username = sc.nextLine().trim();
+        if (username.isEmpty()) {
+            System.out.println(Colors.red(">> [INVALID] Username cannot be empty."));
+            return;
+        }
+        auth.demoteUser(username, requester);
+    }
 }
