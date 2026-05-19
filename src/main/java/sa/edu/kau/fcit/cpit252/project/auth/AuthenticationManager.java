@@ -1,5 +1,7 @@
-package sa.edu.kau.fcit.cpit252.project;
+package sa.edu.kau.fcit.cpit252.project.auth;
 
+import sa.edu.kau.fcit.cpit252.project.model.Role;
+import sa.edu.kau.fcit.cpit252.project.database.DatabaseManager;
 import java.util.HashMap;
 import java.util.Map;
 

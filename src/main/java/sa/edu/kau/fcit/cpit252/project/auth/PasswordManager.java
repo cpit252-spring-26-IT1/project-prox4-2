@@ -1,5 +1,4 @@
-package sa.edu.kau.fcit.cpit252.project;
-
+package sa.edu.kau.fcit.cpit252.project.auth;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 

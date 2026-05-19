@@ -1,7 +1,9 @@
-package sa.edu.kau.fcit.cpit252.project;
+package sa.edu.kau.fcit.cpit252.project.auth;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
+import sa.edu.kau.fcit.cpit252.project.model.Role;
 
 public class UserAccount implements Serializable {
 
