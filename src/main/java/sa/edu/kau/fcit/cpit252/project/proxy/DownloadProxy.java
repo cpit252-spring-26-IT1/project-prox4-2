@@ -1,9 +1,15 @@
-package sa.edu.kau.fcit.cpit252.project;
+package sa.edu.kau.fcit.cpit252.project.proxy;
 
+import sa.edu.kau.fcit.cpit252.project.auth.UserAccount;
+import sa.edu.kau.fcit.cpit252.project.files.FileResource;
+import sa.edu.kau.fcit.cpit252.project.files.FileType;
+import sa.edu.kau.fcit.cpit252.project.model.Role;
+import sa.edu.kau.fcit.cpit252.project.ui.Colors;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+
 
 public class DownloadProxy {
 
