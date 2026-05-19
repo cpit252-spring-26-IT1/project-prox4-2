@@ -2,11 +2,7 @@ package sa.edu.kau.fcit.cpit252.project.observer;
 
 import sa.edu.kau.fcit.cpit252.project.auth.UserAccount;
 import sa.edu.kau.fcit.cpit252.project.files.FileResource;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import sa.edu.kau.fcit.cpit252.project.ui.Colors;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -20,23 +16,21 @@ public class SecurityLogger implements AccessObserver {
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
-    public void onAccessEvent(AccessEvent event, User user, FileResource file) {
+    public void onAccessEvent(AccessEvent event, UserAccount user, FileResource file) {
         String timestamp = LocalDateTime.now().format(FORMATTER);
-        String logEntry = String.format("[%s] EVENT=%-15s | USER=%-20s | ROLE=%-10s | FILE=%s",
-                timestamp,
-                event.name(),
-                user.getUsername(),
-                user.getRole().name(),
-                file.getName());
+        String username = user != null ? user.getUsername() : "SYSTEM";
+        String role = user != null ? user.getRole().toString() : "SYSTEM";
+        String fileName = file != null ? file.getName() : "N/A";
 
-        // Print to console
-        System.out.println(">> [LOG] " + logEntry);
+        String logEntry = String.format("[%s] EVENT=%-20s | USER=%-20s | ROLE=%-10s | FILE=%s",
+                timestamp, event.name(), username, role, fileName);
 
-        // Write to log file
+        System.out.println(Colors.cyan(">> [LOG] ") + logEntry);
+
         try (PrintWriter writer = new PrintWriter(new FileWriter(LOG_FILE, true))) {
             writer.println(logEntry);
         } catch (IOException e) {
-            System.out.println(">> [LOG ERROR] Could not write to log file: " + e.getMessage());
+            System.out.println(Colors.red(">> [LOG ERROR] Could not write to log file: " + e.getMessage()));
         }
     }
 }
