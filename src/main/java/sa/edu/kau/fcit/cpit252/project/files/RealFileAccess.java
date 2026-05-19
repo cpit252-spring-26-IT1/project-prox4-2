@@ -2,18 +2,16 @@ package sa.edu.kau.fcit.cpit252.project.files;
 
 import sa.edu.kau.fcit.cpit252.project.auth.UserAccount;
 import sa.edu.kau.fcit.cpit252.project.ui.Colors;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
+import sa.edu.kau.fcit.cpit252.project.model.User;
+
+import sa.edu.kau.fcit.cpit252.project.proxy.FileAccess;
 
 public class RealFileAccess implements FileAccess {
 

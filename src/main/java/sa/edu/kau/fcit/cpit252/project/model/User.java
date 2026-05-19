@@ -1,4 +1,7 @@
 package sa.edu.kau.fcit.cpit252.project.model;
+
+import sa.edu.kau.fcit.cpit252.project.files.FileResource;
+
 public class User {
     private String username;
     private Role role;
