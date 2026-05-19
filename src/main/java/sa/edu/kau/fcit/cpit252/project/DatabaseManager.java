@@ -1,9 +1,13 @@
 package sa.edu.kau.fcit.cpit252.project;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileWriter;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
 
 public class DatabaseManager {
@@ -31,4 +35,36 @@ public class DatabaseManager {
             System.out.println(">> [DB ERROR] Could not save data: " + e.getMessage());
         }
     }
+
+    @SuppressWarnings("unchecked")
+    public static Map<String, UserAccount> load() {
+        File file = new File(DB_FILE);
+        if (!file.exists()) {
+            return null; // First run
+        }
+
+        try {
+            // Read and decrypt
+            String encrypted = new String(java.nio.file.Files.readAllBytes(file.toPath()));
+            String decrypted = CryptoManager.decrypt(encrypted);
+            byte[] bytes = java.util.Base64.getDecoder().decode(decrypted);
+
+            // Deserialize
+            ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            Map<String, UserAccount> accounts = (Map<String, UserAccount>) ois.readObject();
+            ois.close();
+            return accounts;
+
+        } catch (Exception e) {
+            System.out.println(">> [DB ERROR] Could not load data: " + e.getMessage());
+            return new HashMap<>();
+        }
+    }
+
+    public static boolean isFirstRun() {
+        return !new File(DB_FILE).exists();
+    }
+
+    
 }
