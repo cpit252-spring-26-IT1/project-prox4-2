@@ -66,4 +66,47 @@ public class App {
         auth.createOwner(username, password);
         System.out.println(Colors.green("\n>> [SUCCESS] System is ready. Please login.\n"));
     }
+
+    private static void loginLoop() {
+        while (true) {
+            System.out.println(Colors.cyan("─── LOGIN ───"));
+            System.out.println(Colors.white("1.") + " Login");
+            System.out.println(Colors.white("2.") + " Continue as Guest");
+            System.out.println(Colors.white("3.") + " Exit");
+            System.out.print(Colors.white("Your choice: "));
+
+            if (!sc.hasNextLine()) break;
+            String choice = sc.nextLine().trim();
+
+            switch (choice) {
+                case "1":
+                    System.out.print(Colors.white("Username: "));
+                    String username = sc.nextLine().trim();
+                    System.out.print(Colors.white("Password: "));
+                    String password = sc.nextLine().trim();
+
+                    UserAccount user = auth.login(username, password);
+                    if (user != null) {
+                        if (user.getRole() == Role.OWNER) {
+                            OwnerDashboard.show(auth);
+                        }
+                        sessionLoop(user);
+                    }
+                    break;
+
+                case "2":
+                    UserAccount guest = new UserAccount("Guest", "guest", Role.GUEST);
+                    System.out.println(Colors.yellow(">> [GUEST] Limited access granted."));
+                    sessionLoop(guest);
+                    break;
+
+                case "3":
+                    System.out.println(Colors.white(">> [SYSTEM] Goodbye!"));
+                    return;
+
+                default:
+                    System.out.println(Colors.red(">> [INVALID] Please select 1, 2, or 3."));
+            }
+        }
+    }
 }
