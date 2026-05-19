@@ -1,5 +1,9 @@
-package sa.edu.kau.fcit.cpit252.project;
+package sa.edu.kau.fcit.cpit252.project.ui;
 
+import sa.edu.kau.fcit.cpit252.project.auth.AuthenticationManager;
+import sa.edu.kau.fcit.cpit252.project.auth.UserAccount;
+import sa.edu.kau.fcit.cpit252.project.model.Role;
+import java.util.Scanner;
 import java.util.Scanner;
 
 public class UserManager {

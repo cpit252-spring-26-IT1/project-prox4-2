@@ -1,5 +1,4 @@
-package sa.edu.kau.fcit.cpit252.project;
-
+package sa.edu.kau.fcit.cpit252.project.ui;
 public class Colors {
     public static final String RESET   = "\033[0m";
     public static final String RED     = "\033[0;31m";
