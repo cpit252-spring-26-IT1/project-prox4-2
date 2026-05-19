@@ -1,46 +1,70 @@
 package sa.edu.kau.fcit.cpit252.project;
+
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 public class AuthenticationManager {
+
+    // ── Inner class ──────────────────────────────────────────
+    public static class UserAccount {
+        private String username;
+        private String hashedPassword;
+        private Role role;
+        private int failedAttempts;
+        private LocalDateTime lockoutUntil;
+
+        public UserAccount(String username, String password, Role role) {
+            this.username = username;
+            this.hashedPassword = PasswordManager.hash(password);
+            this.role = role;
+            this.failedAttempts = 0;
+            this.lockoutUntil = null;
+        }
+
+        public String getUsername() { return username; }
+        public Role getRole() { return role; }
+        public void setRole(Role role) { this.role = role; }
+        public String getHashedPassword() { return hashedPassword; }
+        public void setHashedPassword(String hash) { this.hashedPassword = hash; }
+
+        public boolean isLocked() {
+            return lockoutUntil != null && LocalDateTime.now().isBefore(lockoutUntil);
+        }
+
+        public void incrementFailedAttempts() {
+            failedAttempts++;
+            if (failedAttempts >= 3 && role != Role.OWNER) {
+                lockoutUntil = LocalDateTime.now().plusMinutes(5);
+            }
+        }
+
+        public void resetFailedAttempts() {
+            failedAttempts = 0;
+            lockoutUntil = null;
+        }
+
+        public LocalDateTime getLockoutUntil() { return lockoutUntil; }
+        public int getFailedAttempts() { return failedAttempts; }
+    }
+
+    // ── Singleton ─────────────────────────────────────────────
     private static AuthenticationManager instance;
-    private final Map<String, Role> userDatabase;
+    private final Map<String, UserAccount> accounts;
 
     private AuthenticationManager() {
-        userDatabase = new HashMap<>();
-        userDatabase.put("Nawaf", Role.MANAGER);
-        userDatabase.put("Khaled", Role.MANAGER);
-        userDatabase.put("Abdulrahman", Role.MANAGER);
-        userDatabase.put("Faisal", Role.USER);
-        System.out.println(">> [SYSTEM] Authentication Manager has been successfully initialized.");
+        accounts = new HashMap<>();
+        accounts.put("Nawaf",        new UserAccount("Nawaf",        "owner123", Role.OWNER));
+        accounts.put("Khaled",       new UserAccount("Khaled",       "mgr123",   Role.MANAGER));
+        accounts.put("Abdulrahman",  new UserAccount("Abdulrahman",  "mgr123",   Role.MANAGER));
+        accounts.put("Faisal",       new UserAccount("Faisal",       "user123",  Role.USER));
+        System.out.println(">> [SYSTEM] Authentication Manager initialized.");
     }
 
     public static synchronized AuthenticationManager getInstance() {
-        if (instance == null) {
-            instance = new AuthenticationManager();
-        }
+        if (instance == null) instance = new AuthenticationManager();
         return instance;
     }
 
-    public User authenticate(String username) {
-        if (username == null || username.trim().isEmpty()) {
-            System.out.println(">> [LOGIN FAILED] Username cannot be empty.");
-            return null;
-        }
-        
-        String trimmedUsername = username.trim();
-        
-        // Case-insensitive lookup
-        for (Map.Entry<String, Role> entry : userDatabase.entrySet()) {
-            if (entry.getKey().equalsIgnoreCase(trimmedUsername)) {
-                Role role = entry.getValue();
-                System.out.println(">> [LOGIN SUCCESS] Welcome back, " + entry.getKey() + "! Your role is: " + role);
-                return new User(entry.getKey(), role);
-            }
-        }
-       
-        System.out.println(">> [VISITOR ACCESS] User '" + trimmedUsername + "' not found in our records.");
-        System.out.println(">> [SYSTEM] You are now logged in as a GUEST with limited access.");
-        return new User(trimmedUsername, Role.GUEST);
-    }
+    public Map<String, UserAccount> getAccounts() { return accounts; }
 }
