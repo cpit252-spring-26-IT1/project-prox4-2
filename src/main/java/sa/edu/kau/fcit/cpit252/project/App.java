@@ -43,7 +43,7 @@ public class App {
             while (session) {
                 System.out.println("\n--- USER MENU [" + user.getUsername() + " | " + user.getRole() + "] ---");
                 System.out.println("1. Open a File");
-                System.out.println("2. Download a File");
+                System.out.println("2. Move a File to the project folder");
                 System.out.println("3. Switch User / Logout");
                 System.out.println("4. Exit System");
                 System.out.print("Your Selection: ");
