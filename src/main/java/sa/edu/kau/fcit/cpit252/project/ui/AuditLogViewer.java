@@ -26,9 +26,9 @@ public class AuditLogViewer {
             int start = Math.max(0, lines.size() - lastN);
             for (int i = start; i < lines.size(); i++) {
                 String line = lines.get(i);
-                if (line.contains("DENIED")  line.contains("LOCKED")  line.contains("FAILED")) {
+                if (line.contains("DENIED") || line.contains("LOCKED") || line.contains("FAILED")) {
                     System.out.println(Colors.red("  " + line));
-                } else if (line.contains("GRANTED")  line.contains("SUCCESS")  line.contains("CREATED")) {
+                } else if (line.contains("GRANTED") || line.contains("SUCCESS") || line.contains("CREATED")) {
                     System.out.println(Colors.green("  " + line));
                 } else {
                     System.out.println(Colors.yellow("  " + line));
