@@ -14,6 +14,7 @@ import sa.edu.kau.fcit.cpit252.project.observer.AlertObserver;
 import sa.edu.kau.fcit.cpit252.project.observer.SecurityLogger;
 import sa.edu.kau.fcit.cpit252.project.proxy.SecureFileProxy;
 import sa.edu.kau.fcit.cpit252.project.ui.*;
+import sa.edu.kau.fcit.cpit252.project.model.Operation;
 
 import java.util.Scanner;
 
@@ -180,4 +181,136 @@ public class App {
         }
         registry.register(new FileResource(name, path, ft));
     }
+
+    private static boolean handleOwner(String choice, UserAccount user) {
+        UserManager um = new UserManager(auth, sc);
+        switch (choice) {
+            case "1": browseFiles(user); break;
+            case "2":
+                FileResource f2 = selectFile(user);
+                if (f2 != null) proxy.execute(Operation.OPEN, f2, user);
+                break;
+            case "3":
+                FileResource f3 = selectFile(user);
+                if (f3 != null) proxy.execute(Operation.MOVE, f3, user);
+                break;
+            case "4": registerFile(user); break;
+            case "5":
+                FileResource f5 = selectFile(user);
+                if (f5 != null) {
+                    proxy.execute(Operation.DELETE, f5, user);
+                    registry.delete(f5.getName());
+                }
+                break;
+            case "6":
+                FileResource f6 = selectFile(user);
+                if (f6 != null) {
+                    System.out.println("[1] Lock  [2] Unlock");
+                    System.out.print(Colors.white("Choice: "));
+                    String lChoice = sc.nextLine().trim();
+                    if (lChoice.equals("1")) FileLockManager.lockFile(f6, user);
+                    else if (lChoice.equals("2")) FileLockManager.unlockFile(f6, user);
+                }
+                break;
+            case "7":
+                System.out.println("[1] Add User  [2] Remove User  [3] Promote  [4] Demote  [5] List Users");
+                System.out.print(Colors.white("Choice: "));
+                String uChoice = sc.nextLine().trim();
+                switch (uChoice) {
+                    case "1": um.addUser(user); break;
+                    case "2": um.removeUser(user); break;
+                    case "3": um.promoteUser(user); break;
+                    case "4": um.demoteUser(user); break;
+                    case "5": um.listUsers(); break;
+                    default: System.out.println(Colors.red(">> [INVALID] Unknown option."));
+                }
+                break;
+            case "8": AuditLogViewer.viewLog(20); break;
+            case "9": AuditLogViewer.clearLog(); break;
+            case "10":
+                promotionManager.showPendingRequests();
+                if (!promotionManager.getPendingRequests().isEmpty()) {
+                    System.out.print("Approve(A) or Reject(R) request number: ");
+                    String ar = sc.nextLine().trim();
+                    System.out.print("Request number: ");
+                    try {
+                        int idx = Integer.parseInt(sc.nextLine().trim());
+                        if (ar.equalsIgnoreCase("A")) promotionManager.approveRequest(idx, user, auth);
+                        else if (ar.equalsIgnoreCase("R")) promotionManager.rejectRequest(idx);
+                    } catch (NumberFormatException e) {
+                        System.out.println(Colors.red(">> [INVALID] Invalid number."));
+                    }
+                }
+                break;
+            case "11": return false;
+            default: System.out.println(Colors.red(">> [INVALID] Unknown option."));
+        }
+        return true;
+    }
+    private static boolean handleManager(String choice, UserAccount user) {
+        UserManager um = new UserManager(auth, sc);
+        switch (choice) {
+            case "1": browseFiles(user); break;
+            case "2":
+                FileResource f2 = selectFile(user);
+                if (f2 != null) proxy.execute(Operation.OPEN, f2, user);
+                break;
+            case "3":
+                FileResource f3 = selectFile(user);
+                if (f3 != null) proxy.execute(Operation.MOVE, f3, user);
+                break;
+            case "4": registerFile(user); break;
+            case "5":
+                FileResource f5 = selectFile(user);
+                if (f5 != null) {
+                    proxy.execute(Operation.DELETE, f5, user);
+                    registry.delete(f5.getName());
+                }
+                break;
+            case "6":
+                FileResource f6 = selectFile(user);
+                if (f6 != null) {
+                    System.out.println("[1] Lock  [2] Unlock");
+                    System.out.print(Colors.white("Choice: "));
+                    String lChoice = sc.nextLine().trim();
+                    if (lChoice.equals("1")) FileLockManager.lockFile(f6, user);
+                    else if (lChoice.equals("2")) FileLockManager.unlockFile(f6, user);
+                }
+                break;
+            case "7": um.addUser(user); break;
+            case "8": AuditLogViewer.viewLog(20); break;
+            case "9": return false;
+            default: System.out.println(Colors.red(">> [INVALID] Unknown option."));
+        }
+        return true;
+    }
+
+    private static boolean handleUser(String choice, UserAccount user) {
+        switch (choice) {
+            case "1": browseFiles(user); break;
+            case "2":
+                FileResource f2 = selectFile(user);
+                if (f2 != null) proxy.execute(Operation.OPEN, f2, user);
+                break;
+            case "3":
+                FileResource f3 = selectFile(user);
+                if (f3 != null) proxy.execute(Operation.MOVE, f3, user);
+                break;
+            case "4": promotionManager.requestPromotion(user); break;
+            case "5": return false;
+            default: System.out.println(Colors.red(">> [INVALID] Unknown option."));
+        }
+        return true;
+    }
+
+    private static boolean handleGuest(String choice, UserAccount user) {
+        switch (choice) {
+            case "1": browseFiles(user); break;
+            case "2": promotionManager.requestPromotion(user); break;
+            case "3": return false;
+            default: System.out.println(Colors.red(">> [INVALID] Unknown option."));
+        }
+        return true;
+    }
+
 }

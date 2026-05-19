@@ -3,8 +3,10 @@ package sa.edu.kau.fcit.cpit252.project.proxy;
 import sa.edu.kau.fcit.cpit252.project.auth.UserAccount;
 import sa.edu.kau.fcit.cpit252.project.files.FileResource;
 import sa.edu.kau.fcit.cpit252.project.files.FileType;
+import sa.edu.kau.fcit.cpit252.project.files.RealFileAccess;
 import sa.edu.kau.fcit.cpit252.project.files.TimeAccessChecker;
 import sa.edu.kau.fcit.cpit252.project.model.Role;
+import sa.edu.kau.fcit.cpit252.project.model.User;
 import sa.edu.kau.fcit.cpit252.project.observer.AccessEvent;
 import sa.edu.kau.fcit.cpit252.project.observer.AccessObserver;
 import sa.edu.kau.fcit.cpit252.project.ui.Colors;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import  sa.edu.kau.fcit.cpit252.project.model.Operation;
 
 public class SecureFileProxy implements FileAccess {
 
