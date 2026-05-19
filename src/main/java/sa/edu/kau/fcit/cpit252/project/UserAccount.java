@@ -32,4 +32,22 @@ public class UserAccount implements Serializable {
     public void setMustChangePassword(boolean v) { this.mustChangePassword = v; }
     public int getFailedAttempts() { return failedAttempts; }
     public LocalDateTime getLockoutUntil() { return lockoutUntil; }
+
+    public boolean isLocked() {
+        return lockoutUntil != null && LocalDateTime.now().isBefore(lockoutUntil);
+    }
+
+    public void incrementFailedAttempts() {
+        failedAttempts++;
+        if (failedAttempts >= 3 && role != Role.OWNER) {
+            lockoutUntil = LocalDateTime.now().plusMinutes(5);
+        }
+    }
+
+    public void resetFailedAttempts() {
+        failedAttempts = 0;
+        lockoutUntil = null;
+    }
+
+    
 }
