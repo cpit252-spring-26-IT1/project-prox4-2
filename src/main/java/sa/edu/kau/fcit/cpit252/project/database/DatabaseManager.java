@@ -1,4 +1,4 @@
-package sa.edu.kau.fcit.cpit252.project;
+package sa.edu.kau.fcit.cpit252.project.database;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -9,6 +9,10 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
+
+import sa.edu.kau.fcit.cpit252.project.auth.CryptoManager;
+import sa.edu.kau.fcit.cpit252.project.auth.UserAccount;
+
 
 public class DatabaseManager {
 
