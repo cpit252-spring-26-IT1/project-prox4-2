@@ -1,5 +1,4 @@
-package sa.edu.kau.fcit.cpit252.project;
-
+package sa.edu.kau.fcit.cpit252.project.model;
 public class User {
     private String username;
     private Role role;
