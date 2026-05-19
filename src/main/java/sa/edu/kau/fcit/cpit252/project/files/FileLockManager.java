@@ -1,4 +1,8 @@
-package sa.edu.kau.fcit.cpit252.project;
+package sa.edu.kau.fcit.cpit252.project.files;
+
+import sa.edu.kau.fcit.cpit252.project.auth.UserAccount;
+import sa.edu.kau.fcit.cpit252.project.model.Role;
+import sa.edu.kau.fcit.cpit252.project.ui.Colors;
 
 public class FileLockManager {
 
