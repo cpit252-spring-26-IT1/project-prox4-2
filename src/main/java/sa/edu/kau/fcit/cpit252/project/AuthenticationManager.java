@@ -75,5 +75,99 @@ public class AuthenticationManager {
         return null;
     }
 
+    
     public Map<String, UserAccount> getAccounts() { return accounts; }
+
+
+
+    public boolean addUser(String username, String password, Role role, UserAccount requester) {
+        if (findAccount(username) != null) {
+            System.out.println(">> [ERROR] Username already exists.");
+            return false;
+        }
+        if (requester.getRole() == Role.MANAGER && role != Role.USER) {
+            System.out.println(">> [ERROR] MANAGER can only add USER accounts.");
+            return false;
+        }
+        if (requester.getRole() == Role.MANAGER && role == Role.OWNER) {
+            System.out.println(">> [ERROR] Cannot create OWNER account.");
+            return false;
+        }
+        UserAccount newAccount = new UserAccount(username, password, role);
+        newAccount.setMustChangePassword(true);
+        accounts.put(username, newAccount);
+        DatabaseManager.save(accounts);
+        System.out.println(">> [SUCCESS] User '" + username + "' created with role: " + role);
+        return true;
+    }
+
+    public boolean removeUser(String username, UserAccount requester) {
+        UserAccount target = findAccount(username);
+        if (target == null) {
+            System.out.println(">> [ERROR] User not found.");
+            return false;
+        }
+        if (target.getRole() == Role.OWNER) {
+            System.out.println(">> [ERROR] Cannot delete OWNER account.");
+            return false;
+        }
+        if (requester.getRole() == Role.MANAGER) {
+            System.out.println(">> [ERROR] MANAGER cannot delete users.");
+            return false;
+        }
+        accounts.remove(target.getUsername());
+        DatabaseManager.save(accounts);
+        System.out.println(">> [SUCCESS] User '" + username + "' deleted.");
+        return true;
+    }
+
+    public boolean promoteUser(String username, UserAccount requester) {
+        UserAccount target = findAccount(username);
+        if (target == null) {
+            System.out.println(">> [ERROR] User not found.");
+            return false;
+        }
+        if (requester.getRole() != Role.OWNER) {
+            System.out.println(">> [ERROR] Only OWNER can promote users.");
+            return false;
+        }
+        if (target.getRole() == Role.OWNER) {
+            System.out.println(">> [ERROR] Cannot promote OWNER.");
+            return false;
+        }
+        if (target.getRole() == Role.MANAGER) {
+            System.out.println(">> [ERROR] Already at maximum rank (MANAGER).");
+            return false;
+        }
+        Role oldRole = target.getRole();
+        target.setRole(oldRole == Role.GUEST ? Role.USER : Role.MANAGER);
+        DatabaseManager.save(accounts);
+        System.out.println(">> [SUCCESS] '" + username + "' promoted from " + oldRole + " to " + target.getRole());
+        return true;
+    }
+
+    public boolean demoteUser(String username, UserAccount requester) {
+        UserAccount target = findAccount(username);
+        if (target == null) {
+            System.out.println(">> [ERROR] User not found.");
+            return false;
+        }
+        if (requester.getRole() != Role.OWNER) {
+            System.out.println(">> [ERROR] Only OWNER can demote users.");
+            return false;
+        }
+        if (target.getRole() == Role.OWNER) {
+            System.out.println(">> [ERROR] Cannot demote OWNER.");
+            return false;
+        }
+        if (target.getRole() == Role.GUEST) {
+            System.out.println(">> [ERROR] Already at minimum rank (GUEST).");
+            return false;
+        }
+        Role oldRole = target.getRole();
+        target.setRole(oldRole == Role.MANAGER ? Role.USER : Role.GUEST);
+        DatabaseManager.save(accounts);
+        System.out.println(">> [SUCCESS] '" + username + "' demoted from " + oldRole + " to " + target.getRole());
+        return true;
+    }
 }
