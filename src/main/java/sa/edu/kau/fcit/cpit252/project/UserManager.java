@@ -56,4 +56,35 @@ public class UserManager {
 
         auth.addUser(username, password, role, requester);
     }
+
+    public void removeUser(UserAccount requester) {
+        if (requester.getRole() != Role.OWNER) {
+            System.out.println(Colors.red("XX [DENIED] Only OWNER can remove users."));
+            return;
+        }
+
+        System.out.println(Colors.cyan("\n─── Remove User ───"));
+        listUsers();
+
+        System.out.print("Enter username to remove: ");
+        String username = sc.nextLine().trim();
+        if (username.isEmpty()) {
+            System.out.println(Colors.red(">> [INVALID] Username cannot be empty."));
+            return;
+        }
+
+        auth.removeUser(username, requester);
+    }
+
+    public void listUsers() {
+        System.out.println(Colors.cyan("\n─── Registered Users ───"));
+        for (UserAccount account : auth.getAccounts().values()) {
+            String status = account.isLocked() ?
+                Colors.red("[LOCKED]") : Colors.green("[ACTIVE]");
+            System.out.println("  " + status + " " +
+                Colors.white(account.getUsername()) +
+                " — " + Colors.yellow(account.getRole().toString()));
+        }
+        System.out.println();
+    }
 }
