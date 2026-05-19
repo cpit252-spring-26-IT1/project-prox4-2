@@ -21,4 +21,16 @@ public class CryptoManager {
             throw new RuntimeException("Encryption failed: " + e.getMessage());
         }
     }
+
+    public static String decrypt(String encryptedData) {
+        try {
+            SecretKeySpec key = new SecretKeySpec(SECRET_KEY.getBytes(), ALGORITHM);
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.DECRYPT_MODE, key);
+            byte[] decoded = Base64.getDecoder().decode(encryptedData);
+            return new String(cipher.doFinal(decoded));
+        } catch (Exception e) {
+            throw new RuntimeException("Decryption failed: " + e.getMessage());
+        }
+    }
 }
