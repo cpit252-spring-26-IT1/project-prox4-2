@@ -1,4 +1,18 @@
 package sa.edu.kau.fcit.cpit252.project;
+
+import sa.edu.kau.fcit.cpit252.project.auth.AuthenticationManager;
+import sa.edu.kau.fcit.cpit252.project.auth.UserAccount;
+import sa.edu.kau.fcit.cpit252.project.files.FileResource;
+import sa.edu.kau.fcit.cpit252.project.files.FileType;
+import sa.edu.kau.fcit.cpit252.project.model.Role;
+import sa.edu.kau.fcit.cpit252.project.observer.AccessEvent;
+import sa.edu.kau.fcit.cpit252.project.observer.SecurityLogger;
+import sa.edu.kau.fcit.cpit252.project.observer.AlertObserver;
+import sa.edu.kau.fcit.cpit252.project.proxy.SecureFileProxy;
+import sa.edu.kau.fcit.cpit252.project.proxy.DownloadProxy;
+import sa.edu.kau.fcit.cpit252.project.ui.Banner;
+import sa.edu.kau.fcit.cpit252.project.ui.Colors;
+import sa.edu.kau.fcit.cpit252.project.ui.UserManager;
 import java.util.Scanner;
 
 public class App {
