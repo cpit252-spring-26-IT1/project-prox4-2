@@ -37,7 +37,7 @@ java -jar target/project-prox4-3.jar
 
 | Username | Role |
 |---|---|
-| Nawaf | MANAGER |
+| Nawaf | OWNER |
 | Khaled | MANAGER |
 | Abdulrahman | MANAGER |
 | Faisal | USER |
