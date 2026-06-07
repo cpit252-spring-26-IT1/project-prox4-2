@@ -333,4 +333,581 @@ public class AppTest {
         runApp("1\nowner\npass\n");
         assertTrue(out().contains("OWNER DASHBOARD"));
     }
+
+    // ===========================================================
+    //  UNIT TESTS
+    // ===========================================================
+
+    // ---- Enums ----
+    @Test @Order(100)
+    void enumsHaveExpectedValues() {
+        assertEquals(4, Role.values().length);
+        assertEquals(Role.OWNER, Role.valueOf("OWNER"));
+        assertEquals(3, FileType.values().length);
+        assertEquals(FileType.NORMAL, FileType.valueOf("NORMAL"));
+        assertEquals(6, Operation.values().length);
+        assertEquals(Operation.REGISTER, Operation.valueOf("REGISTER"));
+        assertEquals(15, AccessEvent.values().length);
+        assertEquals(AccessEvent.ACCESS_GRANTED, AccessEvent.valueOf("ACCESS_GRANTED"));
+    }
+
+    // ---- Colors / Banner ----
+    @Test @Order(101)
+    void colorsWrapText() {
+        assertTrue(Colors.red("x").contains("x"));
+        assertTrue(Colors.green("x").contains("x"));
+        assertTrue(Colors.yellow("x").contains("x"));
+        assertTrue(Colors.cyan("x").contains("x"));
+        assertTrue(Colors.white("x").contains("x"));
+        assertTrue(Colors.bold("x").contains("x"));
+        assertTrue(Colors.purple("x").contains(Colors.PURPLE));
+        assertNotNull(Colors.RESET);
+    }
+
+    @Test @Order(102)
+    void bannerPrints() {
+        Banner.printBanner();
+        Banner.printFirstRunBanner();
+        Banner.printSection("HELLO");
+        assertTrue(out().contains("ProX4"));
+        assertTrue(out().contains("HELLO"));
+    }
+
+    // ---- FileResource ----
+    @Test @Order(103)
+    void fileResourceGettersAndLock() {
+        FileResource fr = new FileResource("doc", "/p/doc.txt", FileType.NORMAL);
+        assertEquals("doc", fr.getName());
+        assertEquals("/p/doc.txt", fr.getPath());
+        assertEquals(FileType.NORMAL, fr.getType());
+        assertFalse(fr.isLocked());
+        fr.setLocked(true);
+        assertTrue(fr.isLocked());
+    }
+
+    // ---- User (model) ----
+    @Test @Order(104)
+    void userCanReadRules() {
+        assertEquals("M", new User("M", Role.MANAGER).getUsername());
+        User m = new User("M", Role.MANAGER);
+        assertTrue(m.canRead(new FileResource("a", "/p", FileType.SENSITIVE)));
+        assertTrue(m.canRead(new FileResource("a", "/p", FileType.INTERNAL)));
+        assertTrue(m.canRead(new FileResource("a", "/p", FileType.NORMAL)));
+
+        User u = new User("U", Role.USER);
+        assertFalse(u.canRead(new FileResource("a", "/p", FileType.SENSITIVE)));
+        assertTrue(u.canRead(new FileResource("a", "/p", FileType.INTERNAL)));
+
+        User g = new User("G", Role.GUEST);
+        assertFalse(g.canRead(new FileResource("a", "/p", FileType.INTERNAL)));
+        assertTrue(g.canRead(new FileResource("a", "/p", FileType.NORMAL)));
+        assertEquals(Role.GUEST, g.getRole());
+
+        assertFalse(m.canRead(null));
+        assertFalse(m.canRead(new FileResource("a", "/p", null)));
+    }
+
+    // ---- PasswordManager / CryptoManager ----
+    @Test @Order(105)
+    void passwordHashAndVerify() {
+        String h = PasswordManager.hash("secret");
+        assertEquals(h, PasswordManager.hash("secret"));
+        assertTrue(PasswordManager.verify("secret", h));
+        assertFalse(PasswordManager.verify("nope", h));
+    }
+
+    @Test @Order(106)
+    void cryptoRoundTripAndFailure() {
+        String enc = CryptoManager.encrypt("payload");
+        assertEquals("payload", CryptoManager.decrypt(enc));
+        assertThrows(RuntimeException.class, () -> CryptoManager.decrypt("!!not-valid!!"));
+    }
+
+    // ---- UserAccount ----
+    @Test @Order(107)
+    void userAccountLockoutLifecycle() {
+        UserAccount a = new UserAccount("acc", "pw", Role.USER);
+        assertEquals("acc", a.getUsername());
+        assertEquals(Role.USER, a.getRole());
+        assertNotNull(a.getHashedPassword());
+        assertFalse(a.isLocked());
+        assertFalse(a.isMustChangePassword());
+        assertNull(a.getLockoutUntil());
+
+        a.setRole(Role.MANAGER);
+        assertEquals(Role.MANAGER, a.getRole());
+        a.setMustChangePassword(true);
+        assertTrue(a.isMustChangePassword());
+        a.setHashedPassword("abc");
+        assertEquals("abc", a.getHashedPassword());
+
+        a.incrementFailedAttempts();
+        a.incrementFailedAttempts();
+        a.incrementFailedAttempts();
+        assertEquals(3, a.getFailedAttempts());
+        assertTrue(a.isLocked());
+        assertNotNull(a.getLockoutUntil());
+        a.resetFailedAttempts();
+        assertEquals(0, a.getFailedAttempts());
+        assertFalse(a.isLocked());
+
+        UserAccount ownerAcc = new UserAccount("o", "p", Role.OWNER);
+        ownerAcc.incrementFailedAttempts();
+        ownerAcc.incrementFailedAttempts();
+        ownerAcc.incrementFailedAttempts();
+        assertFalse(ownerAcc.isLocked()); // OWNER never locks
+    }
+
+    // ---- AuthenticationManager (singleton already populated) ----
+    @Test @Order(108)
+    void authSingletonAndLoginFlows() {
+        assertSame(AuthenticationManager.getInstance(), AuthenticationManager.getInstance());
+
+        // success
+        assertNotNull(auth().login("owner", "pass"));
+        // account not found
+        assertNull(auth().login("ghost-user", "x"));
+    }
+
+    @Test @Order(109)
+    void authLockoutAfterThreeFailures() {
+        ensureUser("locktest", "right", Role.USER);
+        assertNull(auth().login("locktest", "wrong")); // 1
+        assertNull(auth().login("locktest", "wrong")); // 2
+        assertNull(auth().login("locktest", "wrong")); // 3 -> locked
+        assertTrue(out().contains("ACCOUNT LOCKED") || out().contains("Locked"));
+        assertNull(auth().login("locktest", "right"));  // locked branch
+        assertTrue(out().contains("Account is locked"));
+    }
+
+    @Test @Order(110)
+    void authAddUserValidation() {
+        // duplicate
+        assertFalse(auth().addUser("owner", "x", Role.USER, owner()));
+        // MANAGER may only add USER
+        UserAccount mgr = ensureUser("mgr", "mgrpass", Role.MANAGER);
+        assertFalse(auth().addUser("newmgr", "x", Role.MANAGER, mgr));
+        assertTrue(out().contains("MANAGER can only add USER"));
+        // success
+        assertTrue(auth().addUser("addok", "x", Role.USER, owner()));
+    }
+
+    @Test @Order(111)
+    void authRemoveUserValidation() {
+        assertFalse(auth().removeUser("does-not-exist", owner()));
+        assertFalse(auth().removeUser("owner", owner())); // cannot delete OWNER
+        UserAccount mgr = ensureUser("mgr", "mgrpass", Role.MANAGER);
+        ensureUser("rmtarget", "x", Role.USER);
+        assertFalse(auth().removeUser("rmtarget", mgr)); // MANAGER cannot delete
+        assertTrue(auth().removeUser("rmtarget", owner())); // OWNER ok
+    }
+
+    @Test @Order(112)
+    void authPromoteValidation() {
+        ensureUser("promoU", "x", Role.USER);
+        // not owner
+        UserAccount mgr = ensureUser("mgr", "mgrpass", Role.MANAGER);
+        assertFalse(auth().promoteUser("promoU", mgr));
+        // target not found
+        assertFalse(auth().promoteUser("ghost", owner()));
+        // promote OWNER
+        assertFalse(auth().promoteUser("owner", owner()));
+        // success USER -> MANAGER
+        assertTrue(auth().promoteUser("promoU", owner()));
+        // already MANAGER
+        assertFalse(auth().promoteUser("promoU", owner()));
+        // GUEST -> USER
+        ensureUser("promoG", "x", Role.GUEST);
+        assertTrue(auth().promoteUser("promoG", owner()));
+        assertEquals(Role.USER, auth().getAccounts().get("promoG").getRole());
+    }
+
+    @Test @Order(113)
+    void authDemoteValidation() {
+        // not found
+        assertFalse(auth().demoteUser("ghost", owner()));
+        // not owner
+        UserAccount mgr = ensureUser("mgr", "mgrpass", Role.MANAGER);
+        assertFalse(auth().demoteUser("mgr", mgr));
+        // demote OWNER
+        assertFalse(auth().demoteUser("owner", owner()));
+        // MANAGER -> USER
+        ensureUser("demM", "x", Role.MANAGER);
+        assertTrue(auth().demoteUser("demM", owner()));
+        assertEquals(Role.USER, auth().getAccounts().get("demM").getRole());
+        // USER -> GUEST
+        assertTrue(auth().demoteUser("demM", owner()));
+        assertEquals(Role.GUEST, auth().getAccounts().get("demM").getRole());
+        // already GUEST
+        assertFalse(auth().demoteUser("demM", owner()));
+    }
+
+    // ---- FileRegistry ----
+    @Test @Order(114)
+    void fileRegistryOperationsAndVisibility() {
+        FileRegistry reg = FileRegistry.getInstance();
+        reg.register(new FileResource("rs", "/p", FileType.SENSITIVE));
+        reg.register(new FileResource("ri", "/p", FileType.INTERNAL));
+        reg.register(new FileResource("rn", "/p", FileType.NORMAL));
+
+        assertNotNull(reg.getFile("rs"));
+        assertNull(reg.getFile("no-such"));
+        assertFalse(reg.isEmpty());
+        assertNotNull(reg.getAll());
+
+        Map<String, FileResource> ownerView = reg.getAllVisibleTo(Role.OWNER);
+        assertTrue(ownerView.containsKey("rs"));
+        Map<String, FileResource> userView = reg.getAllVisibleTo(Role.USER);
+        assertFalse(userView.containsKey("rs"));
+        assertTrue(userView.containsKey("ri"));
+        Map<String, FileResource> guestView = reg.getAllVisibleTo(Role.GUEST);
+        assertFalse(guestView.containsKey("ri"));
+        assertTrue(guestView.containsKey("rn"));
+
+        reg.delete("rn");
+        assertNull(reg.getFile("rn"));
+    }
+
+    // ---- FileLockManager ----
+    @Test @Order(115)
+    void fileLockManagerRules() {
+        FileResource f = new FileResource("lf", "/p", FileType.NORMAL);
+        UserAccount user = new UserAccount("u", "p", Role.USER);
+        UserAccount mgr = new UserAccount("m", "p", Role.MANAGER);
+
+        assertFalse(FileLockManager.lockFile(f, user));   // denied
+        assertTrue(FileLockManager.lockFile(f, mgr));      // ok
+        assertFalse(FileLockManager.lockFile(f, mgr));     // already locked
+        assertFalse(FileLockManager.unlockFile(f, user));  // denied
+        assertTrue(FileLockManager.unlockFile(f, mgr));    // ok
+        assertFalse(FileLockManager.unlockFile(f, mgr));   // not locked
+    }
+
+    // ---- TimeAccessChecker ----
+    @Test @Order(116)
+    void timeAccessChecker() {
+        TimeAccessChecker tc = new TimeAccessChecker();
+        assertTrue(tc.isAccessAllowed());
+        assertTrue(tc.getAccessWindow().contains(":00"));
+    }
+
+    // ---- RealFileAccess ----
+    @Test @Order(117)
+    void realFileAccessVariants() {
+        UserAccount u = new UserAccount("Nawaf", "p", Role.MANAGER);
+        RealFileAccess real = new RealFileAccess();
+
+        real.openFile(new FileResource("t", T(), FileType.NORMAL), u);
+        assertTrue(out().contains("FILE FOUND"));
+        assertTrue(out().contains("Hello World"));
+        outContent.reset();
+
+        real.openFile(new FileResource("g", "/no/such/file.txt", FileType.NORMAL), u);
+        assertTrue(out().contains("does not exist"));
+        outContent.reset();
+
+        real.openFile(new FileResource("d", tempDir.toString(), FileType.NORMAL), u);
+        assertTrue(out().contains("not a file"));
+        outContent.reset();
+
+        real.openFile(new FileResource("e", emptyFile.toString(), FileType.NORMAL), u);
+        assertTrue(out().contains("File is empty"));
+    }
+
+    // ---- SecureFileProxy ----
+    @Test @Order(118)
+    void proxyNullArgsAndLegacy() {
+        SecureFileProxy proxy = new SecureFileProxy();
+        proxy.execute(Operation.OPEN, null, new UserAccount("m", "p", Role.MANAGER));
+        assertTrue(out().contains("PROXY ERROR"));
+        outContent.reset();
+        proxy.execute(Operation.OPEN, new FileResource("a", "/b", FileType.NORMAL), null);
+        assertTrue(out().contains("PROXY ERROR"));
+        outContent.reset();
+        proxy.openFile(new FileResource("a", "/b", FileType.NORMAL), new UserAccount("m", "p", Role.MANAGER));
+        assertTrue(out().contains("Use execute"));
+    }
+
+    @Test @Order(119)
+    void proxyPermissionAndViewLimit() {
+        SecureFileProxy proxy = new SecureFileProxy();
+        UserAccount guest = new UserAccount("g", "p", Role.GUEST);
+        UserAccount mgr = new UserAccount("m", "p", Role.MANAGER);
+        UserAccount usr = new UserAccount("u", "p", Role.USER);
+
+        // permission denied (guest on SENSITIVE)
+        proxy.execute(Operation.OPEN, new FileResource("s", T(), FileType.SENSITIVE), guest);
+        assertTrue(out().contains("PROXY DENIED"));
+        outContent.reset();
+
+        // granted manager sensitive
+        proxy.execute(Operation.OPEN, new FileResource("s2", T(), FileType.SENSITIVE), mgr);
+        assertTrue(out().contains("PROXY GRANTED"));
+        outContent.reset();
+
+        // view limit for USER
+        FileResource n = new FileResource("nn", T(), FileType.NORMAL);
+        proxy.execute(Operation.OPEN, n, usr);
+        proxy.execute(Operation.OPEN, n, usr);
+        proxy.execute(Operation.OPEN, n, usr);
+        outContent.reset();
+        proxy.execute(Operation.OPEN, n, usr);
+        assertTrue(out().contains("Limit Reached"));
+    }
+
+    @Test @Order(120)
+    void proxyLockBypassAndOps() {
+        SecureFileProxy proxy = new SecureFileProxy();
+        UserAccount mgr = new UserAccount("m", "p", Role.MANAGER);
+        UserAccount ownerAcc = new UserAccount("o", "p", Role.OWNER);
+
+        FileResource locked = new FileResource("lk", T(), FileType.NORMAL);
+        locked.setLocked(true);
+        proxy.execute(Operation.OPEN, locked, mgr);
+        assertTrue(out().contains("File is locked"));
+        outContent.reset();
+
+        // OWNER bypasses lock & permission & view-limit
+        proxy.execute(Operation.OPEN, locked, ownerAcc);
+        assertTrue(out().contains("PROXY GRANTED"));
+        outContent.reset();
+
+        // DELETE rules
+        proxy.execute(Operation.DELETE, new FileResource("dn", T(), FileType.NORMAL), mgr);
+        assertTrue(out().contains("removed from registry"));
+        outContent.reset();
+        proxy.execute(Operation.DELETE, new FileResource("ds", T(), FileType.SENSITIVE), mgr);
+        assertTrue(out().contains("PROXY DENIED"));
+        outContent.reset();
+        proxy.execute(Operation.DELETE, new FileResource("ds2", T(), FileType.SENSITIVE), ownerAcc);
+        assertTrue(out().contains("removed from registry"));
+        outContent.reset();
+
+        // LOCK / UNLOCK / REGISTER / MOVE
+        FileResource lf = new FileResource("opf", T(), FileType.NORMAL);
+        proxy.execute(Operation.LOCK, lf, mgr);
+        assertTrue(lf.isLocked());
+        assertTrue(out().contains("now locked"));
+        outContent.reset();
+        // UNLOCK must be on an unlocked file (the lock-check denies non-owners on locked files)
+        FileResource uf = new FileResource("opf2", T(), FileType.NORMAL);
+        proxy.execute(Operation.UNLOCK, uf, mgr);
+        assertTrue(out().contains("now unlocked"));
+        outContent.reset();
+        proxy.execute(Operation.REGISTER, new FileResource("rg", T(), FileType.NORMAL), mgr);
+        assertTrue(out().contains("Operation noted"));
+        outContent.reset();
+        proxy.execute(Operation.MOVE, new FileResource("mv", T(), FileType.NORMAL), mgr);
+        assertTrue(out().contains("MOVE SUCCESS"));
+        outContent.reset();
+        proxy.execute(Operation.MOVE, new FileResource("mvx", "Z:\\no\\such.txt", FileType.NORMAL), mgr);
+        assertTrue(out().contains("Source file not found"));
+    }
+
+    @Test @Order(121)
+    void proxyObservers() {
+        SecureFileProxy proxy = new SecureFileProxy();
+        final boolean[] notified = {false};
+        AccessObserver obs = (e, u, f) -> { if (e == AccessEvent.ACCESS_GRANTED) notified[0] = true; };
+        proxy.addObserver(obs);
+        proxy.execute(Operation.OPEN, new FileResource("o", T(), FileType.NORMAL),
+                new UserAccount("m", "p", Role.MANAGER));
+        assertTrue(notified[0]);
+        notified[0] = false;
+        proxy.removeObserver(obs);
+        proxy.execute(Operation.OPEN, new FileResource("o", T(), FileType.NORMAL),
+                new UserAccount("m", "p", Role.MANAGER));
+        assertFalse(notified[0]);
+    }
+
+    // ---- DownloadProxy ----
+    @Test @Order(122)
+    void downloadProxyRules() {
+        DownloadProxy dp = new DownloadProxy();
+        dp.downloadFile(new FileResource("s", T(), FileType.SENSITIVE), new UserAccount("m", "p", Role.MANAGER));
+        assertTrue(out().contains("DOWNLOAD SUCCESS"));
+        outContent.reset();
+        dp.downloadFile(new FileResource("n", T(), FileType.NORMAL), new UserAccount("g", "p", Role.GUEST));
+        assertTrue(out().contains("DOWNLOAD DENIED"));
+        outContent.reset();
+        dp.downloadFile(new FileResource("s", T(), FileType.SENSITIVE), new UserAccount("u", "p", Role.USER));
+        assertTrue(out().contains("DOWNLOAD DENIED"));
+        outContent.reset();
+        dp.downloadFile(new FileResource("i", T(), FileType.INTERNAL), new UserAccount("u", "p", Role.USER));
+        assertTrue(out().contains("DOWNLOAD SUCCESS"));
+        outContent.reset();
+        dp.downloadFile(new FileResource("n", T(), FileType.NORMAL), new UserAccount("u", "p", Role.USER));
+        assertTrue(out().contains("DOWNLOAD SUCCESS"));
+        outContent.reset();
+        dp.downloadFile(new FileResource("g", "/no/such.txt", FileType.NORMAL), new UserAccount("m", "p", Role.MANAGER));
+        assertTrue(out().contains("Source file not found"));
+    }
+
+    // ---- AlertObserver ----
+    @Test @Order(123)
+    void alertObserverEvents() {
+        AlertObserver a = new AlertObserver();
+        UserAccount u = new UserAccount("X", "p", Role.MANAGER);
+        FileResource f = new FileResource("f", "/p", FileType.NORMAL);
+        a.onAccessEvent(AccessEvent.ACCESS_DENIED, u, f);
+        a.onAccessEvent(AccessEvent.LIMIT_REACHED, u, f);
+        a.onAccessEvent(AccessEvent.ACCOUNT_LOCKED, u, f);
+        a.onAccessEvent(AccessEvent.USER_CREATED, u, f);
+        a.onAccessEvent(AccessEvent.USER_PROMOTED, u, f);
+        a.onAccessEvent(AccessEvent.USER_DEMOTED, u, f);
+        a.onAccessEvent(AccessEvent.FILE_LOCKED, u, f);
+        a.onAccessEvent(AccessEvent.FILE_UNLOCKED, u, f);
+        a.onAccessEvent(AccessEvent.ACCESS_GRANTED, u, f); // default (silent)
+        a.onAccessEvent(AccessEvent.ACCESS_DENIED, null, null); // null branch
+        String o = out();
+        assertTrue(o.contains("SECURITY ALERT"));
+        assertTrue(o.contains("View limit exceeded"));
+        assertTrue(o.contains("AUDIT"));
+        assertTrue(o.contains("SYSTEM"));
+    }
+
+    // ---- SecurityLogger ----
+    @Test @Order(124)
+    void securityLoggerWritesConsoleAndFile() throws IOException {
+        Files.deleteIfExists(Paths.get("access_log.txt"));
+        SecurityLogger logger = new SecurityLogger();
+        logger.onAccessEvent(AccessEvent.ACCESS_GRANTED,
+                new UserAccount("LogTest", "p", Role.MANAGER),
+                new FileResource("file", "/p", FileType.NORMAL));
+        logger.onAccessEvent(AccessEvent.ACCESS_DENIED, null, null); // SYSTEM/N/A branch
+        assertTrue(out().contains("[LOG]"));
+        assertTrue(Files.exists(Paths.get("access_log.txt")));
+        String content = new String(Files.readAllBytes(Paths.get("access_log.txt")));
+        assertTrue(content.contains("LogTest"));
+        assertTrue(content.contains("SYSTEM"));
+    }
+
+    // ---- AuditLogViewer ----
+    @Test @Order(125)
+    void auditLogViewerStates() throws IOException {
+        // missing
+        Files.deleteIfExists(Paths.get("access_log.txt"));
+        AuditLogViewer.viewLog(10);
+        assertTrue(out().contains("No audit log found"));
+        outContent.reset();
+
+        // empty file
+        new PrintWriter("access_log.txt").close();
+        AuditLogViewer.viewLog(10);
+        assertTrue(out().contains("Audit log is empty"));
+        outContent.reset();
+
+        // with categorized lines
+        try (PrintWriter pw = new PrintWriter(new FileWriter("access_log.txt"))) {
+            pw.println("EVENT ACCESS_DENIED here");
+            pw.println("EVENT ACCESS_GRANTED here");
+            pw.println("EVENT PASSWORD_CHANGED here");
+        }
+        AuditLogViewer.viewLog(10);
+        String o = out();
+        assertTrue(o.contains("Audit Log"));
+        outContent.reset();
+
+        AuditLogViewer.clearLog();
+        assertTrue(out().contains("Audit log cleared"));
+    }
+
+    // ---- MenuRenderer ----
+    @Test @Order(126)
+    void menuRendererAllRoles() {
+        MenuRenderer.showMenu(Role.OWNER);
+        MenuRenderer.showMenu(Role.MANAGER);
+        MenuRenderer.showMenu(Role.USER);
+        MenuRenderer.showMenu(Role.GUEST);
+        String o = out();
+        assertTrue(o.contains("Manage Users"));
+        assertTrue(o.contains("Request Promotion"));
+    }
+
+    // ---- OwnerDashboard ----
+    @Test @Order(127)
+    void ownerDashboardWithAndWithoutLog() throws IOException {
+        try (PrintWriter pw = new PrintWriter(new FileWriter("access_log.txt"))) {
+            pw.println("EVENT ACCESS_DENIED a");
+            pw.println("EVENT LOGIN_FAILED b");
+        }
+        OwnerDashboard.show(auth());
+        assertTrue(out().contains("OWNER DASHBOARD"));
+        assertTrue(out().contains("Security Violations"));
+        outContent.reset();
+
+        Files.deleteIfExists(Paths.get("access_log.txt"));
+        OwnerDashboard.show(auth());
+        assertTrue(out().contains("OWNER DASHBOARD"));
+    }
+
+    // ---- PromotionRequest ----
+    @Test @Order(128)
+    void promotionRequestNextRole() {
+        PromotionRequest g = new PromotionRequest("g", Role.GUEST);
+        assertEquals(Role.USER, g.getRequestedRole());
+        PromotionRequest u = new PromotionRequest("u", Role.USER);
+        assertEquals(Role.MANAGER, u.getRequestedRole());
+        PromotionRequest m = new PromotionRequest("m", Role.MANAGER);
+        assertEquals(Role.MANAGER, m.getRequestedRole()); // default branch
+        assertEquals("u", u.getRequesterUsername());
+        assertEquals(Role.USER, u.getCurrentRole());
+        assertNotNull(u.getRequestTime());
+        assertTrue(u.isPending());
+        u.setPending(false);
+        assertFalse(u.isPending());
+    }
+
+    // ---- PromotionManager ----
+    @Test @Order(129)
+    void promotionManagerFlows() {
+        PromotionManager pm = PromotionManager.getInstance();
+        assertSame(pm, PromotionManager.getInstance());
+
+        // manager/owner cannot be promoted
+        pm.requestPromotion(new UserAccount("mm", "p", Role.MANAGER));
+        assertTrue(out().contains("cannot be promoted"));
+        outContent.reset();
+
+        UserAccount cand = new UserAccount("candUser", "p", Role.USER);
+        pm.requestPromotion(cand);
+        assertTrue(out().contains("Promotion request submitted"));
+        outContent.reset();
+        // duplicate
+        pm.requestPromotion(cand);
+        assertTrue(out().contains("already have a pending"));
+        outContent.reset();
+
+        pm.showPendingRequests();
+        assertTrue(out().contains("Pending Promotion Requests"));
+        outContent.reset();
+
+        // invalid range approve/reject
+        pm.approveRequest(999, owner(), auth());
+        assertTrue(out().contains("out of range"));
+        outContent.reset();
+        pm.rejectRequest(999);
+        assertTrue(out().contains("out of range"));
+    }
+
+    // ---- UserManager direct branches (OWNER-only guards + empty input) ----
+    @Test @Order(130)
+    void userManagerGuardAndEmptyBranches() {
+        UserAccount mgr = ensureUser("mgr", "mgrpass", Role.MANAGER);
+        UserManager umMgr = new UserManager(auth(), new Scanner(new ByteArrayInputStream("".getBytes())));
+        umMgr.removeUser(mgr);
+        umMgr.promoteUser(mgr);
+        umMgr.demoteUser(mgr);
+        String o = out();
+        assertTrue(o.contains("Only OWNER can remove"));
+        assertTrue(o.contains("Only OWNER can promote"));
+        assertTrue(o.contains("Only OWNER can demote"));
+        outContent.reset();
+
+        UserManager umEmpty = new UserManager(auth(), new Scanner(new ByteArrayInputStream("\n\n\n".getBytes())));
+        umEmpty.removeUser(owner());
+        umEmpty.promoteUser(owner());
+        umEmpty.demoteUser(owner());
+        assertTrue(out().contains("Username cannot be empty"));
+    }
 }
