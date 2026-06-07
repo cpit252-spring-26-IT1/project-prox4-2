@@ -1,4 +1,4 @@
-# ProX4 â€“ Secure Access Proxy System
+# ProX4 – Secure Access Proxy System
 
 ## Description
 
@@ -9,32 +9,32 @@ limits and business-hours rules, while an **Observer** layer reacts to every sec
 (console alerts + persistent audit log). User accounts are persisted in an **encrypted**
 local database with hashed passwords and brute-force lockout.
 
-**Team:** Nawaf Baryan (2338019) آ· Abdulrhman Nasiri (2337601)
-**Course:** CPIT-252 آ· King Abdulaziz University, FCIT
+**Team:** Nawaf Baryan (2338019) · Abdulrhman Nasiri (2337601)
+**Course:** CPIT-252 · King Abdulaziz University, FCIT
 
 ### Design Patterns Used
-- **Singleton** (Creational) â€” `AuthenticationManager`, `FileRegistry` and `PromotionManager`
+- **Singleton** (Creational) — `AuthenticationManager`, `FileRegistry` and `PromotionManager`
   each expose a single shared instance.
-- **Proxy** (Structural) â€” `SecureFileProxy` guards the real `RealFileAccess` resource;
+- **Proxy** (Structural) — `SecureFileProxy` guards the real `RealFileAccess` resource;
   `DownloadProxy` guards file downloads.
-- **Observer** (Behavioral) â€” `SecureFileProxy` notifies `SecurityLogger` and `AlertObserver`
+- **Observer** (Behavioral) — `SecureFileProxy` notifies `SecurityLogger` and `AlertObserver`
   of every `AccessEvent`.
 
 ## Features
 - **Role-Based Access Control** with four roles (`OWNER`, `MANAGER`, `USER`, `GUEST`) and
   three file sensitivity levels (`SENSITIVE`, `INTERNAL`, `NORMAL`).
-- **Secure accounts** â€” passwords hashed with SHA-256, account auto-lockout after 3 failed
+- **Secure accounts** — passwords hashed with SHA-256, account auto-lockout after 3 failed
   attempts, and an AES-encrypted user database (`users.dat`).
-- **First-run setup** â€” on first launch you create the `OWNER` account; there are no
+- **First-run setup** — on first launch you create the `OWNER` account; there are no
   hard-coded credentials.
-- **View-limit enforcement** â€” each non-owner is limited to 3 views per file.
-- **File operations** â€” register, browse, open (with confidential watermark), move to a
+- **View-limit enforcement** — each non-owner is limited to 3 views per file.
+- **File operations** — register, browse, open (with confidential watermark), move to a
   workspace, delete, and lock/unlock files.
-- **User management** â€” owners add / remove / promote / demote users; managers may add users.
-- **Promotion workflow** â€” users and guests can request a promotion; owners approve or reject.
-- **Owner dashboard** â€” at-a-glance pending requests, locked files, registered users and
+- **User management** — owners add / remove / promote / demote users; managers may add users.
+- **Promotion workflow** — users and guests can request a promotion; owners approve or reject.
+- **Owner dashboard** — at-a-glance pending requests, locked files, registered users and
   logged security violations.
-- **Auditing** â€” every event is written to `access_log.txt`; a built-in colored audit-log
+- **Auditing** — every event is written to `access_log.txt`; a built-in colored audit-log
   viewer lets owners review or clear it.
 - **Real-time security alerts** for unauthorized access attempts and view-limit violations.
 
@@ -79,25 +79,26 @@ through a redirected `System.in`) so that even the interactive menu flows are ex
 ```shell
 mvn test
 ```
-- **49 tests**, all passing.
-- **96.5% line coverage** (911 / 944 lines).
-- **90% branch coverage** (403 / 447 branches).
+- **51 tests**, all passing.
+- **97.3% line coverage** (919 / 944 lines).
+- **91% branch coverage** (408 / 447 branches).
 - HTML report generated at `target/site/jacoco/index.html`.
 
 The handful of uncovered lines are unreachable defensive `catch` blocks (e.g. SHA-256
 unavailable, AES failure with a valid key, I/O write failures) and guarded dead branches.
 
 ## Project Highlights / What's Included
-- âœ… Clean separation of concerns via **Singleton + Proxy + Observer** patterns.
-- âœ… **Encrypted, persistent** account store with hashed passwords and lockout.
-- âœ… **96.5%** test line coverage with JUnit 5 + JaCoCo (`AppTest`).
-- âœ… **Dockerized** with a multi-stage build (`Dockerfile` + `.dockerignore`).
-- âœ… Executable JAR with a configured `Main-Class` manifest (`maven-jar-plugin`).
-- âœ… UTF-8 / ANSI-colored console UI (banner, menus, dashboard, audit viewer).
+- ✅ Clean separation of concerns via **Singleton + Proxy + Observer** patterns.
+- ✅ **Encrypted, persistent** account store with hashed passwords and lockout.
+- ✅ **97.3%** test line coverage with JUnit 5 + JaCoCo (`AppTest`).
+- ✅ **Dockerized** with a multi-stage build (`Dockerfile` + `.dockerignore`).
+- ✅ Executable JAR with a configured `Main-Class` manifest (`maven-jar-plugin`).
+- ✅ **CI/CD** via GitHub Actions (build, test, coverage, Docker).
+- ✅ UTF-8 / ANSI-colored console UI (banner, menus, dashboard, audit viewer).
 
 ## Screenshots
 
-**1. First-run setup â€” creating the OWNER account**
+**1. First-run setup — creating the OWNER account**
 ![First-run setup](docs/screenshots/01-first-run-setup.png)
 
 **2. Owner login & dashboard**
@@ -114,13 +115,67 @@ unavailable, AES failure with a valid key, I/O write failures) and guarded dead 
 
 ## Releases
 
-- **v4.0** â€” Security Stage: encrypted persistent accounts, SHA-256 password hashing,
+- **v4.0** — Security Stage: encrypted persistent accounts, SHA-256 password hashing,
   account lockout, OWNER role + dashboard, file lock/unlock, promotion-request workflow,
-  audit-log viewer, download proxy, Docker support, ~95% test coverage.
-- **v3.0** â€” Behavioral Stage: Observer pattern, security logging, alert observer,
+  audit-log viewer, download proxy, Docker support, CI/CD, ~97% test coverage.
+- **v3.0** — Behavioral Stage: Observer pattern, security logging, alert observer,
   time-limited access, full codebase audit.
-- **v2.0** â€” Structural Stage: Proxy pattern, role-based access control, view-limit enforcement.
-- **v1.0** â€” Creational Stage: Singleton `AuthenticationManager`, basic CLI menu.
+- **v2.0** — Structural Stage: Proxy pattern, role-based access control, view-limit enforcement.
+- **v1.0** — Creational Stage: Singleton `AuthenticationManager`, basic CLI menu.
+
+## Use of Generative AI Tools
+
+In compliance with the CPIT-252 syllabus policy on the disclosure of generative AI 
+tools, we hereby document our use of AI assistants throughout the development of 
+this project.
+
+### Tools Used
+
+We used two generative AI assistants during different phases of the project:
+
+- **Google Gemini** — used during the early planning and proposal phase for 
+  brainstorming the project idea, exploring possible problem domains, and 
+  discussing how design patterns could be applied to security-related systems.
+
+- **Anthropic Claude** — used throughout the implementation phase as a 
+  collaborative coding assistant.
+
+### How AI Was Used
+
+The AI tools assisted us in the following ways:
+
+- **Brainstorming and Ideation:** Helped explore project ideas related to file 
+  security, role-based access, and authentication systems before settling on the 
+  Secure Access Proxy concept.
+- **Design Discussions:** Discussed the appropriateness of each design pattern 
+  (Singleton, Proxy, Observer) for our specific problem and explored trade-offs.
+- **Code Review:** Identified bugs, edge cases, input validation issues, and 
+  potential crashes in our existing code.
+- **Code Suggestions:** Provided code snippets and templates for features such 
+  as AES encryption, SHA-256 hashing, file lock management, and the promotion 
+  request system.
+- **Refactoring Guidance:** Suggested how to reorganize the codebase into 
+  logical packages (auth, database, files, proxy, observer, ui, model).
+- **Documentation Drafting:** Helped draft the README, release notes, and 
+  in-code comments.
+- **Test Case Generation:** Generated boilerplate JUnit test cases for various 
+  classes which we then reviewed, modified, and verified.
+- **Concept Explanations:** Clarified concepts related to thread safety, Java 
+  serialization, AES encryption modes, and ANSI terminal coloring.
+
+
+### Our Verification Process
+
+Every piece of AI-generated code or text was:
+1. Read and understood by at least one team member before being added.
+2. Modified or rewritten when it did not match our project's structure or style.
+3. Tested manually by running the application and verifying expected behavior.
+4. Discussed between team members when the suggestion conflicted with our 
+   existing design.
+
+We take full responsibility for the correctness, quality, and originality of 
+the final submitted work.
+
 
 ## License
 
