@@ -1,5 +1,7 @@
 # ProX4 – Secure Access Proxy System
 
+[![CI](https://github.com/cpit252-spring-26-IT1/project-prox4-2/actions/workflows/ci.yml/badge.svg)](https://github.com/cpit252-spring-26-IT1/project-prox4-2/actions/workflows/ci.yml)
+
 ## Description
 
 A Java CLI application that simulates a secure file-access system built around classic
