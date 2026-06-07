@@ -10,7 +10,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class CryptoManager {
 
-    private static final String SECRET_KEY = "ProX4SecureKey2026CPIT252KAU!!!";
+    private static final String SECRET_KEY = "ProX4SecureKey2026CPIT252KAU!!!!";
     private static final String ALGORITHM = "AES";
 
     public static String encrypt(String data) {
