@@ -1,0 +1,9 @@
+target/
+.idea/
+.vscode/
+*.iml
+.git/
+downloads/
+workspace/
+users.dat
+access_log.txt
