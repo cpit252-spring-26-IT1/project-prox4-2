@@ -10,6 +10,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class CryptoManager {
 
+    // Must be 16, 24, or 32 bytes for AES. This key is exactly 32 bytes.
     private static final String SECRET_KEY = "ProX4SecureKey2026CPIT252KAU!!!!";
     private static final String ALGORITHM = "AES";
 
