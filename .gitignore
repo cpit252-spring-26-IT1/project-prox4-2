@@ -47,3 +47,9 @@ buildNumber.properties
 *.iml
 *.iws
 out/
+
+# ProX4 runtime artifacts (generated when the app runs)
+users.dat
+access_log.txt
+downloads/
+workspace/
