@@ -910,4 +910,137 @@ public class AppTest {
         umEmpty.demoteUser(owner());
         assertTrue(out().contains("Username cannot be empty"));
     }
+
+    // ---- SecureFileProxy permission matrix (branch coverage) ----
+    @Test @Order(131)
+    void proxyPermissionMatrix() {
+        SecureFileProxy proxy = new SecureFileProxy();
+        UserAccount usr = new UserAccount("u", "p", Role.USER);
+        UserAccount guest = new UserAccount("g", "p", Role.GUEST);
+        UserAccount mgr = new UserAccount("m", "p", Role.MANAGER);
+
+        proxy.execute(Operation.OPEN, new FileResource("i1", T(), FileType.INTERNAL), usr);   // granted
+        assertTrue(out().contains("PROXY GRANTED")); outContent.reset();
+        proxy.execute(Operation.OPEN, new FileResource("i2", T(), FileType.INTERNAL), guest); // denied
+        assertTrue(out().contains("PROXY DENIED")); outContent.reset();
+        proxy.execute(Operation.OPEN, new FileResource("s1", T(), FileType.SENSITIVE), usr);  // denied
+        assertTrue(out().contains("PROXY DENIED")); outContent.reset();
+        proxy.execute(Operation.MOVE, new FileResource("n1", T(), FileType.NORMAL), guest);   // denied
+        assertTrue(out().contains("PROXY DENIED")); outContent.reset();
+
+        proxy.execute(Operation.DELETE, new FileResource("n2", T(), FileType.NORMAL), usr);   // USER delete -> denied
+        assertTrue(out().contains("PROXY DENIED")); outContent.reset();
+        proxy.execute(Operation.DELETE, new FileResource("i3", T(), FileType.INTERNAL), mgr); // MANAGER delete non-NORMAL -> denied
+        assertTrue(out().contains("PROXY DENIED")); outContent.reset();
+        proxy.execute(Operation.LOCK, new FileResource("n3", T(), FileType.NORMAL), usr);     // USER lock -> denied
+        assertTrue(out().contains("PROXY DENIED")); outContent.reset();
+        proxy.execute(Operation.UNLOCK, new FileResource("n4", T(), FileType.NORMAL), guest); // GUEST unlock -> denied
+        assertTrue(out().contains("PROXY DENIED")); outContent.reset();
+        proxy.execute(Operation.REGISTER, new FileResource("n5", T(), FileType.NORMAL), usr); // USER register -> denied
+        assertTrue(out().contains("PROXY DENIED"));
+    }
+
+    // ---- Utility-class default constructors (line coverage) ----
+    @Test @Order(132)
+    void utilityClassConstructors() {
+        assertNotNull(new App());
+        assertNotNull(new Banner());
+        assertNotNull(new Colors());
+        assertNotNull(new MenuRenderer());
+        assertNotNull(new FileLockManager());
+        assertNotNull(new AuditLogViewer());
+        assertNotNull(new OwnerDashboard());
+        assertNotNull(new DatabaseManager());
+        assertNotNull(new PasswordManager());
+        assertNotNull(new CryptoManager());
+    }
+
+    // ---- AuditLogViewer categorization + SecurityLogger/AuditLogViewer error paths ----
+    @Test @Order(133)
+    void auditAndLoggerErrorPaths() throws IOException {
+        // Cover every color-categorization sub-branch.
+        try (PrintWriter pw = new PrintWriter(new FileWriter("access_log.txt"))) {
+            pw.println("evt DENIED a");
+            pw.println("evt LOCKED a");
+            pw.println("evt FAILED a");
+            pw.println("evt GRANTED a");
+            pw.println("evt SUCCESS a");
+            pw.println("evt CREATED a");
+            pw.println("evt NEUTRAL a");
+        }
+        AuditLogViewer.viewLog(50);
+        assertTrue(out().contains("Audit Log"));
+        outContent.reset();
+
+        // Turn access_log.txt into a DIRECTORY so all file operations throw -> catch branches.
+        Files.deleteIfExists(Paths.get("access_log.txt"));
+        Files.createDirectory(Paths.get("access_log.txt"));
+        try {
+            new SecurityLogger().onAccessEvent(AccessEvent.ACCESS_GRANTED,
+                    new UserAccount("E", "p", Role.MANAGER),
+                    new FileResource("f", "/p", FileType.NORMAL));
+            assertTrue(out().contains("LOG ERROR"));
+            outContent.reset();
+
+            AuditLogViewer.viewLog(10);
+            assertTrue(out().contains("Could not read log"));
+            outContent.reset();
+
+            AuditLogViewer.clearLog();
+            assertTrue(out().contains("Could not clear log"));
+        } finally {
+            Files.deleteIfExists(Paths.get("access_log.txt"));
+        }
+    }
+
+    // ---- DownloadProxy extra branches + IOException catch ----
+    @Test @Order(134)
+    void downloadProxyBranchesAndError() throws IOException {
+        DownloadProxy dp = new DownloadProxy();
+        dp.downloadFile(new FileResource("dn", T(), FileType.NORMAL), new UserAccount("m", "p", Role.MANAGER));
+        assertTrue(out().contains("DOWNLOAD SUCCESS")); outContent.reset();
+        dp.downloadFile(new FileResource("ds", T(), FileType.SENSITIVE), new UserAccount("g", "p", Role.GUEST));
+        assertTrue(out().contains("DOWNLOAD DENIED")); outContent.reset();
+        dp.downloadFile(new FileResource("di", T(), FileType.INTERNAL), new UserAccount("g", "p", Role.GUEST));
+        assertTrue(out().contains("DOWNLOAD DENIED")); outContent.reset();
+
+        // Make "downloads" a regular file so the copy fails -> IOException catch.
+        deleteDir(Paths.get("downloads"));
+        Files.write(Paths.get("downloads"), "x".getBytes());
+        try {
+            dp.downloadFile(new FileResource("derr", T(), FileType.NORMAL), new UserAccount("m", "p", Role.MANAGER));
+            assertTrue(out().contains("DOWNLOAD ERROR"));
+        } finally {
+            Files.deleteIfExists(Paths.get("downloads"));
+        }
+    }
+
+    // ---- DatabaseManager (run last; restores users.dat) ----
+    @Test @Order(200)
+    void databaseManagerRoundTripAndErrors() throws IOException {
+        byte[] backup = Files.readAllBytes(Paths.get("users.dat"));
+        try {
+            assertFalse(DatabaseManager.isFirstRun());
+
+            Map<String, UserAccount> map = new HashMap<>();
+            map.put("z", new UserAccount("z", "pw", Role.USER));
+            DatabaseManager.save(map);
+            Map<String, UserAccount> loaded = DatabaseManager.load();
+            assertNotNull(loaded);
+            assertTrue(loaded.containsKey("z"));
+
+            // corrupted content -> load returns empty map (catch branch)
+            Files.write(Paths.get("users.dat"), "garbage-not-encrypted".getBytes());
+            Map<String, UserAccount> bad = DatabaseManager.load();
+            assertNotNull(bad);
+            assertTrue(bad.isEmpty());
+
+            // missing file -> null
+            Files.deleteIfExists(Paths.get("users.dat"));
+            assertNull(DatabaseManager.load());
+            assertTrue(DatabaseManager.isFirstRun());
+        } finally {
+            Files.write(Paths.get("users.dat"), backup);
+        }
+    }
 }
