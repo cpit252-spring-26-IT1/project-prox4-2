@@ -6,7 +6,6 @@ import sa.edu.kau.fcit.cpit252.project.files.FileType;
 import sa.edu.kau.fcit.cpit252.project.files.RealFileAccess;
 import sa.edu.kau.fcit.cpit252.project.files.TimeAccessChecker;
 import sa.edu.kau.fcit.cpit252.project.model.Role;
-import sa.edu.kau.fcit.cpit252.project.model.User;
 import sa.edu.kau.fcit.cpit252.project.observer.AccessEvent;
 import sa.edu.kau.fcit.cpit252.project.observer.AccessObserver;
 import sa.edu.kau.fcit.cpit252.project.ui.Colors;
@@ -161,7 +160,7 @@ public class SecureFileProxy implements FileAccess {
 
     // Legacy support
     @Override
-    public void openFile(FileResource file, User user) {
+    public void openFile(FileResource file, UserAccount user) {
         System.out.println(Colors.yellow(">> [INFO] Use execute(Operation, FileResource, UserAccount) instead."));
     }
 }
