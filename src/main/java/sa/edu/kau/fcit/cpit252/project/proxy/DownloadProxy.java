@@ -15,7 +15,7 @@ public class DownloadProxy {
 
     private static final String DOWNLOAD_DIR = "downloads/";
 
-    public void downloadFile(FileResource file, User user) {
+    public void downloadFile(FileResource file, UserAccount user) {
         System.out.println("++ [DOWNLOAD PROXY] Checking download permissions for: " + file.getName());
 
         if (!canDownload(user, file)) {
@@ -46,7 +46,7 @@ public class DownloadProxy {
         }
     }
 
-    private boolean canDownload(User user, FileResource file) {
+    private boolean canDownload(UserAccount user, FileResource file) {
         switch (file.getType()) {
             case SENSITIVE:
                 return user.getRole() == Role.MANAGER;
